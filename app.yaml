@@ -1,0 +1,3 @@
+entrypoint: ' /Users/seanduff/Desktop/google-cloud-sdk/bin/dev_appserver.py ~/Documents/lc101/user-signup/'
+env: flex
+runtime: python
