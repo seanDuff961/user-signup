@@ -16,57 +16,79 @@
 #
 import webapp2
 import cgi
+import re
 
-def Build_Page(textarea_content):
+form = """
+<h1>User Signup</h1>
+<form method = "post">
+<table>
+<tr>
+<td>
+<label>Username: <input type="text" name="username"/></label>
+</td>
+<td>
+<label style="color:red">{username_message}</label>
+</td>
+</tr>
+    
+<tr>
+<td>
+<label>Password: <input type="text" name="password"/></label>
+<td>
+<label>{password_message}</label>
+</td>
+</td></tr>
+    
+<tr>
+<td>
+<label>Verify Password: <input type="text" name="verify_password"/></label>
+<td> 
+<label>{password_match_message}</label>
+</td>
+</td></tr>
+    
+<tr>
+<td>
+<label>Email (optional): <input type="text" name="email"/></label>
+<td>
+<label>{email_message}</label>
+</td>
+</td></tr>
+    
+</table>
+<input type = 'submit'/>
+</form>
+"""            
+USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+def valid_username(username):
+    return username and USER_RE.match(username)
 
-    form = """
-    <table>
-        <tr>
-        <td>
-        <label>{0}</label>
-        </td>
-        <td>
-        <label>Username: <input type="text" name="username"/></label>
-        </td></tr>
-    
-        <tr>
-        <td>
-        <label>{1}</label>
-        </td>
-        <td>
-        <label>Password: <input type="text" name="password"/></label>
-        </td></tr>
-    
-        <tr>
-        <td> 
-        <label>{2}</label>
-        </td>
-        <td>
-        <label>Verify Password: <input type="text" name="verify_password"/></label>
-        </td></tr>
-    
-        <tr>
-        <td>
-        <label>{3}</label>
-        </td>
-        <td>
-        <label>Email (optional): <input type="text" name="email"/></label>
-        </td></tr>
-    
-    </table>
-    """
-    submit = "<input type = 'submit'/>"
-    form2 = ("<form method='post'>" 
-            + form + submit + "</form>").format("Please enter a username", "Please enter a password", "Passwords must match","Please enter a valid email")
-            
-    header = "<h1>User Signup</h1>" 
-    
-    return header + form2
+PASS_RE = re.compile(r"^.{3,20}$")
+def valid_password(password):
+    return password and PASS_RE.match(password)
+
+def equal_password(verify_password, password):
+    if password == verify_password:
+        return True
+    else: 
+        return False
+
+EMAIL_RE = re.compile(r'^[\S]+@[\S\+\.[\S]+$')
+def valid_email(email):
+    return not email or EMAIL_RE.match(email)
+
+
         
 class MainHandler(webapp2.RequestHandler):
+    def helper(self, user_message="", user_password="", match_password="", user_email=""):
+       self.response.write(form.format(username_message= user_message, 
+                                  password_message= user_password, 
+                                  password_match_message= match_password,
+                                  email_message= user_email
+                                  ))
+             
     def get(self):
-        content = Build_Page("")
-        self.response.write(content)
+        self.helper()        
         
     def post(self):
         # look inside the request to figure out what the user typed
@@ -74,26 +96,58 @@ class MainHandler(webapp2.RequestHandler):
         password = self.request.get("password")
         verify_password = self.request.get("verify_password")
         email = self.request.get("email")
-        # if the user typed nothing at all, redirect
-        if (not username) or (username.strip() == ""):
-            error = "Please enter a username."
-            self.response.write(error)
-            self.redirect("/?error=" + cgi.escape(error, quote=True))
+        #user_message = self.request.get("username_message")
+        #user_password = self.request.get("password_message")
+        #match_password = self.request.get("password_match_message")
+        #user_email = self.request.get("email_message")
+        
+        params = dict(username = username,
+                      email = email)
+        
+        # if the user doesn't type anytying
+        #if valid_username(username) == "" or ! valid_username
+        user_message="" 
+        user_password=""
+        match_password=""
+        user_email=""
+        if valid_username(username) and valid_password(password) and equal_password(password, verify_password) and valid_email(email):
+            self.redirect('/welcome?username=' + username)
+        if not valid_username(username):
+            user_message="Username not valid"
+        if not valid_password(password):
+            user_password="Password not valid"
+        if not equal_password(password, verify_password):
+            match_password="Passwords must match"
+        if email is not "" and not valid_email(email):
+            user_email="Please enter a valid email"           
+                    
+        self.response.write(form.format(username_message= user_message, 
+                                  password_message= user_password, 
+                                  password_match_message= match_password,
+                                  email_message= user_email
+                                  ))
+            # /welcomesean15
+        #else:
+        #   self.response.('/')
             
-        if (not password) or (username.strip() == ""):
-            error = "Please enter a username."
-            self.response.write(error)
-            self.redirect("/?error=" + cgi.escape(error, quote=True))
+                
+        # error = "."
+            #self.response.write(error)
+            #self.redirect("/?error=" + cgi.escape(error, quote=True))
+            #params['error_username'] = "Please enter a valid username."
+            #have_error = True
             
-        """if (not username) or (username.strip() == ""):
-            error = "Please enter a username."
-            self.response.write(error)
-            self.redirect("/?error=" + cgi.escape(error, quote=True))
+        #if (not password) or (password.strip() == ""):
+            #error = "Please enter a username."
+            #self.response.write(error)
+            #self.redirect("/?error=" + cgi.escape(error, quote=True))
+            #params['error_password'] = "Please enter a valid password."
+            #have_error = True
             
-        if (not username) or (username.strip() == ""):
-            error = "Please enter a username."
-            self.response.write(error)
-            self.redirect("/?error=" + cgi.escape(error, quote=True))"""
+        #if have_error:
+        #    self.render('signup-form.html', **params)
+        #else:
+        #    self.redirect('/unit2/welcome?username=' + username)
         
         #              self.write.form2    
         #message = self.request.get("message") # hello</textarea>hello
@@ -103,9 +157,33 @@ class MainHandler(webapp2.RequestHandler):
         #content = build_page(escaped_message)
         #self.response.write(content)
         
-        #formoriginalform = form.format("","","","","","")
+        #originalform = form.format("","","","","","")
         #page footer
 
+#class Welcome(webapp2.RequestHandler):
+class Welcome(webapp2.RequestHandler):
+       def get(self):
+            username = self.request.get('username')
+            if valid_username(username):
+                 self.response.write(welcome.format(username = username))
+            
+                
+welcome = """
+<!DOCTYPE html>
+    
+<html>
+<head>
+    <title>
+        User Signup
+    </title>
+</head>
+
+<body>
+    <h2>Welcome, {username}!</h2>
+</body>
+</html>
+"""
+                
 #class TestHandler(webapp2.RequestHandler):
 #    """ Handles requests coming in to '/add'
 #        e.g. www.user-signup.com/add
@@ -114,5 +192,5 @@ class MainHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
-    #('/', TestHandler)
+    ('/welcome', Welcome)
 ], debug=True)
