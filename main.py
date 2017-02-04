@@ -35,7 +35,7 @@ form = """
 <td>
 <label>Password: <input type="text" name="password"/></label>
 <td>
-<label>{password_message}</label>
+<label style="color:red">{password_message}</label>
 </td>
 </td></tr>
     
@@ -43,7 +43,7 @@ form = """
 <td>
 <label>Verify Password: <input type="text" name="verify_password"/></label>
 <td> 
-<label>{password_match_message}</label>
+<label style="color:red">{password_match_message}</label>
 </td>
 </td></tr>
     
@@ -51,7 +51,7 @@ form = """
 <td>
 <label>Email (optional): <input type="text" name="email"/></label>
 <td>
-<label>{email_message}</label>
+<label style="color:red">{email_message}</label>
 </td>
 </td></tr>
     
